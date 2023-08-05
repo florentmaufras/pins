@@ -14,8 +14,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Star
+import androidx.compose.material.icons.outlined.Grade
+import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
@@ -51,13 +56,13 @@ class MapActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Map()
+            Screen()
         }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
-    fun Map(
+    fun Screen(
         viewModel: MapViewModel = viewModel()
     ) {
         val montreal = LatLng(45.508888, -73.561668)
@@ -79,7 +84,7 @@ class MapActivity : AppCompatActivity() {
         val scope = rememberCoroutineScope()
         val currentMarker: MutableState<Marker?> = remember { mutableStateOf(null) }
 
-        MaterialTheme() {
+        MaterialTheme {
             if (error.value != null) {
                 Toast.makeText(
                     context,
@@ -117,11 +122,25 @@ class MapActivity : AppCompatActivity() {
                                 style = MaterialTheme.typography.bodySmall,
                                 text = currentMarker.value?.lastUpdate?.format() ?: ""
                             )
-                            Text(
+                            Row(
                                 modifier = Modifier.weight(1.0F, true),
-                                text = currentMarker.value?.starCount?.toString() ?: "",
-                                textAlign = TextAlign.End
-                            )
+                                horizontalArrangement = Arrangement.End
+                            ) {
+                                val currentStarCount = currentMarker.value?.starCount ?: 0
+                                for (i in 1..5) {
+                                    if (currentStarCount >= i) {
+                                        Icon(
+                                            imageVector = Icons.Filled.Star,
+                                            contentDescription = "Star"
+                                        )
+                                    } else {
+                                        Icon(
+                                            imageVector = Icons.Outlined.Grade,
+                                            contentDescription = ""
+                                        )
+                                    }
+                                }
+                            }
                         }
                         Text(
                             style = MaterialTheme.typography.bodySmall,
