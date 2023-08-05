@@ -1,8 +1,9 @@
 package com.demo.pins
 
 import com.demo.pins.feed.FeedAPI
+import com.demo.pins.utils.parser.BooleanJsonAdapter
+import com.demo.pins.utils.parser.DateJsonAdapter
 import com.squareup.moshi.Moshi
-import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 
@@ -11,7 +12,8 @@ object ServiceProvider {
 
     private val moshiConverterFactory: MoshiConverterFactory by lazy {
         val moshi = Moshi.Builder()
-            .addLast(KotlinJsonAdapterFactory())
+            .add(BooleanJsonAdapter())
+            .add(DateJsonAdapter())
             .build()
         MoshiConverterFactory.create(moshi)
     }

@@ -1,9 +1,10 @@
 package com.demo.pins.feed.model
 
+import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 
 @JsonClass(generateAdapter = true)
-data class Condition(
-    val id: String,
-    val args: List<String>?
+data class FeedCode(
+    @Json(name = "feed_code")
+    val feedCode: String
 )

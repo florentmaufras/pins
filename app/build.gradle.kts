@@ -25,6 +25,10 @@ android {
     buildTypes {
         debug {
             isMinifyEnabled = false
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
         release {
             isMinifyEnabled = false
@@ -86,6 +90,9 @@ dependencies {
     implementation(platform("androidx.compose:compose-bom:2023.06.01"))
     implementation("androidx.compose.material3:material3")
     implementation("androidx.activity:activity-compose:1.7.2")
+    val composeLifecycleVersion = "2.6.1"
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:${composeLifecycleVersion}")
+    implementation("androidx.lifecycle:lifecycle-runtime-compose:${composeLifecycleVersion}")
 
     debugImplementation("androidx.compose.ui:ui-tooling")
     implementation("androidx.compose.ui:ui-tooling-preview")

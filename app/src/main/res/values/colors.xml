@@ -2,4 +2,11 @@
 <resources>
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
+
+    <color name="ca">#F44336</color>
+    <color name="fr">#3F51B5</color>
+    <color name="de">#FFC107</color>
+    <color name="us">#E040FB</color>
+    <color name="uk">#8BC34A</color>
+    <color name="other">#00BCD4</color>
 </resources>
