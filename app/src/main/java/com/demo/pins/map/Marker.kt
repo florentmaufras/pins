@@ -15,6 +15,9 @@ data class Marker(
     val lastUpdate: Date?,
     @ColorRes val color: Int
 ) {
+
+    fun displayLocalisation(): String = "$city, $region, $country"
+
     companion object {
         fun buildMarker(feed: Feed): Marker {
             return Marker(
