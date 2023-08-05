@@ -16,7 +16,7 @@ data class Marker(
     @ColorRes val color: Int
 ) {
 
-    fun displayLocalisation(): String = "$city, $region, $country"
+    fun displayLocalization(): String = "$city, $region, $country"
 
     companion object {
         fun buildMarker(feed: Feed): Marker {

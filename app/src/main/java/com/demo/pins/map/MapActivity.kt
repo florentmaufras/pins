@@ -112,7 +112,7 @@ class MapActivity : AppCompatActivity() {
                         Text(
                             modifier = Modifier.padding(bottom = 16.dp),
                             style = MaterialTheme.typography.bodyMedium,
-                            text = currentMarker.value?.displayLocalisation() ?: ""
+                            text = currentMarker.value?.displayLocalization() ?: ""
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth()
