@@ -18,6 +18,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Grade
 import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -58,9 +59,108 @@ class MapActivity : AppCompatActivity() {
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun Screen(
+        viewModel: MapViewModel = viewModel()
+    ) {
+        val error = viewModel.error.collectAsStateWithLifecycle(null)
+
+        MaterialTheme {
+            if (error.value != null) {
+                Toast.makeText(
+                    LocalContext.current,
+                    "Something went wrong!",
+                    Toast.LENGTH_LONG
+                ).show()
+                Log.d("ERROR", error.value?.message ?: "")
+            }
+            DisplayBottomSheetScaffold()
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun DisplayBottomSheetScaffold(
+        viewModel: MapViewModel = viewModel()
+    ) {
+
+        val modalSheetState = rememberBottomSheetScaffoldState(
+            rememberModalBottomSheetState(
+                false
+            ) { it != SheetValue.PartiallyExpanded }
+        )
+        val currentMarker: MutableState<Marker?> = remember { mutableStateOf(null) }
+        val scope = rememberCoroutineScope()
+
+        BottomSheetScaffold(
+            scaffoldState = modalSheetState,
+            sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+            sheetContent = {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .wrapContentHeight(align = Alignment.Top)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                ) {
+                    Text(
+                        style = MaterialTheme.typography.titleMedium,
+                        text = currentMarker.value?.name ?: ""
+                    )
+                    Text(
+                        modifier = Modifier.padding(bottom = 16.dp),
+                        style = MaterialTheme.typography.bodyMedium,
+                        text = currentMarker.value?.let { viewModel.displayLocalization(it) } ?: ""
+                    )
+                    Row(
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            modifier = Modifier.weight(1.0F, true),
+                            style = MaterialTheme.typography.bodySmall,
+                            text = currentMarker.value?.lastUpdate?.format() ?: ""
+                        )
+                        Row(
+                            modifier = Modifier.weight(1.0F, true),
+                            horizontalArrangement = Arrangement.End
+                        ) {
+                            val currentStarCount = currentMarker.value?.starCount ?: 0
+                            for (i in 1..5) {
+                                if (currentStarCount >= i) {
+                                    Icon(
+                                        imageVector = Icons.Filled.Star,
+                                        contentDescription = "Star"
+                                    )
+                                } else {
+                                    Icon(
+                                        imageVector = Icons.Outlined.Grade,
+                                        contentDescription = ""
+                                    )
+                                }
+                            }
+                        }
+                    }
+                    Text(
+                        style = MaterialTheme.typography.bodySmall,
+                        text = currentMarker.value?.let { viewModel.displayPosition(it) } ?: ""
+                    )
+                }
+            }
+        ) {
+            DisplayMap(
+                { marker ->
+                    currentMarker.value = marker
+                    scope.launch { modalSheetState.bottomSheetState.expand() }
+                    true
+                }
+            )
+        }
+    }
+
+    @OptIn(ExperimentalMaterial3Api::class)
+    @Composable
+    fun DisplayMap(
+        onMarkerSelected: (Marker) -> Boolean,
         viewModel: MapViewModel = viewModel()
     ) {
         val montreal = LatLng(45.508888, -73.561668)
@@ -69,106 +169,26 @@ class MapActivity : AppCompatActivity() {
         }
 
         val markers = viewModel.markers.collectAsStateWithLifecycle()
-        val error = viewModel.error.collectAsStateWithLifecycle(null)
+        val pinDrawable = AppCompatResources.getDrawable(LocalContext.current, R.drawable.pin)
 
-        val context = LocalContext.current
-        val pinDrawable = AppCompatResources.getDrawable(context, R.drawable.pin)
-
-        val modalSheetState = rememberBottomSheetScaffoldState(
-            rememberModalBottomSheetState(
-                false
-            ) { it != SheetValue.PartiallyExpanded }
-        )
-        val scope = rememberCoroutineScope()
-        val currentMarker: MutableState<Marker?> = remember { mutableStateOf(null) }
-
-        MaterialTheme {
-            if (error.value != null) {
-                Toast.makeText(
-                    context,
-                    "Something went wrong!",
-                    Toast.LENGTH_LONG
-                ).show()
-                Log.d("ERROR", error.value?.message ?: "")
-            }
-
-            BottomSheetScaffold(
-                scaffoldState = modalSheetState,
-                sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
-                sheetContent = {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .wrapContentHeight(align = Alignment.Top)
-                            .padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Text(
-                            style = MaterialTheme.typography.titleMedium,
-                            text = currentMarker.value?.name ?: ""
+        GoogleMap(
+            modifier = Modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState
+        ) {
+            markers.value?.map { marker ->
+                pinDrawable?.setColorFilterATop(LocalContext.current.getColor(marker.color))
+                Marker(
+                    state = MarkerState(position = marker.position),
+                    icon =  pinDrawable?.toBitmap()?.let { bitmap ->
+                        BitmapDescriptorFactory.fromBitmap(
+                            bitmap
                         )
-                        Text(
-                            modifier = Modifier.padding(bottom = 16.dp),
-                            style = MaterialTheme.typography.bodyMedium,
-                            text = currentMarker.value?.let { viewModel.displayLocalization(it) } ?: ""
-                        )
-                        Row(
-                            modifier = Modifier.fillMaxWidth()
-                        ) {
-                            Text(
-                                modifier = Modifier.weight(1.0F, true),
-                                style = MaterialTheme.typography.bodySmall,
-                                text = currentMarker.value?.lastUpdate?.format() ?: ""
-                            )
-                            Row(
-                                modifier = Modifier.weight(1.0F, true),
-                                horizontalArrangement = Arrangement.End
-                            ) {
-                                val currentStarCount = currentMarker.value?.starCount ?: 0
-                                for (i in 1..5) {
-                                    if (currentStarCount >= i) {
-                                        Icon(
-                                            imageVector = Icons.Filled.Star,
-                                            contentDescription = "Star"
-                                        )
-                                    } else {
-                                        Icon(
-                                            imageVector = Icons.Outlined.Grade,
-                                            contentDescription = ""
-                                        )
-                                    }
-                                }
-                            }
-                        }
-                        Text(
-                            style = MaterialTheme.typography.bodySmall,
-                            text = currentMarker.value?.let { viewModel.displayPosition(it) } ?: ""
-                        )
+                    },
+                    title = marker.name,
+                    onClick = {
+                        onMarkerSelected(marker)
                     }
-                }
-            ) {
-                GoogleMap(
-                    modifier = Modifier.fillMaxSize(),
-                    cameraPositionState = cameraPositionState
-                ) {
-                    markers.value?.map { marker ->
-                        pinDrawable?.setColorFilterATop(context.getColor(marker.color))
-                        Marker(
-                            state = MarkerState(position = marker.position),
-                            icon =  pinDrawable?.toBitmap()?.let { bitmap ->
-                                BitmapDescriptorFactory.fromBitmap(
-                                    bitmap
-                                )
-                            },
-                            title = marker.name,
-                            onClick = {
-                                currentMarker.value = marker
-                                scope.launch { modalSheetState.bottomSheetState.expand() }
-                                true
-                            }
-                        )
-                    }
-                }
+                )
             }
         }
     }
