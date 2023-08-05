@@ -17,7 +17,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Grade
-import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.BottomSheetScaffold
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -34,7 +33,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -112,7 +110,7 @@ class MapActivity : AppCompatActivity() {
                         Text(
                             modifier = Modifier.padding(bottom = 16.dp),
                             style = MaterialTheme.typography.bodyMedium,
-                            text = currentMarker.value?.displayLocalization() ?: ""
+                            text = currentMarker.value?.let { viewModel.displayLocalization(it) } ?: ""
                         )
                         Row(
                             modifier = Modifier.fillMaxWidth()
@@ -144,7 +142,7 @@ class MapActivity : AppCompatActivity() {
                         }
                         Text(
                             style = MaterialTheme.typography.bodySmall,
-                            text = "${currentMarker.value?.position?.latitude ?: ""}, ${currentMarker.value?.position?.longitude?: ""}"
+                            text = currentMarker.value?.let { viewModel.displayPosition(it) } ?: ""
                         )
                     }
                 }

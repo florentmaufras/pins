@@ -56,4 +56,9 @@ class MapViewModel: ViewModel() {
         }
         _markers.value = markerList
     }
+
+    fun displayLocalization(marker: Marker): String = "${marker.city}, ${marker.region}, ${marker.country}"
+    fun displayPosition(marker: Marker): String {
+        return String.format("%.5f, %.5f", marker.position.latitude, marker.position.longitude)
+    }
 }
