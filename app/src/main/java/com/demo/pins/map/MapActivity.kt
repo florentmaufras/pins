@@ -1,11 +1,11 @@
 package com.demo.pins.map
 
-import android.graphics.PorterDuff
 import android.util.Log
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -15,6 +15,7 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.demo.pins.R
+import com.demo.pins.utils.extension.setColorFilterATop
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
@@ -28,12 +29,12 @@ class MapActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            map()
+            Map()
         }
     }
 
     @Composable
-    fun map(
+    fun Map(
         viewModel: MapViewModel = viewModel()
     ) {
         val montreal = LatLng(45.508888, -73.561668)
@@ -45,7 +46,7 @@ class MapActivity : AppCompatActivity() {
         val error = viewModel.error.collectAsStateWithLifecycle(null)
 
         val context = LocalContext.current
-        val pinDrawable = context.getDrawable(R.drawable.pin)
+        val pinDrawable = AppCompatResources.getDrawable(context, R.drawable.pin)
 
         MaterialTheme() {
             if (error.value != null) {
@@ -60,17 +61,16 @@ class MapActivity : AppCompatActivity() {
                 modifier = Modifier.fillMaxSize(),
                 cameraPositionState = cameraPositionState
             ) {
-                markers.value?.map {
-                    pinDrawable?.setColorFilter(context.getColor(it.color), PorterDuff.Mode.SRC_ATOP)
+                markers.value?.map { marker ->
+                    pinDrawable?.setColorFilterATop(context.getColor(marker.color))
                     Marker(
-                        state = MarkerState(position = it.position),
-                        icon =  pinDrawable?.toBitmap()?.let {
+                        state = MarkerState(position = marker.position),
+                        icon =  pinDrawable?.toBitmap()?.let { bitmap ->
                             BitmapDescriptorFactory.fromBitmap(
-                                it
+                                bitmap
                             )
                         },
-                    title = it.name,
-//                    snippet = "Marker in Montreal"
+                        title = marker.name
                     )
                 }
             }
