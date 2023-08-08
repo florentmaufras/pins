@@ -1,6 +1,6 @@
-package com.demo.pins
+package com.demo.pins.services
 
-import com.demo.pins.feed.FeedAPI
+import com.demo.pins.services.feed.FeedAPI
 import com.demo.pins.utils.parser.BooleanJsonAdapter
 import com.demo.pins.utils.parser.DateJsonAdapter
 import com.squareup.moshi.Moshi

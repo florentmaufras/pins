@@ -1,4 +1,4 @@
-package com.demo.pins.map
+package com.demo.pins.map.data
 
 import androidx.annotation.ColorRes
 import com.demo.pins.R

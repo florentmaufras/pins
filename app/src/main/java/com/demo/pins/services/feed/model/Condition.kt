@@ -1,4 +1,4 @@
-package com.demo.pins.feed.model
+package com.demo.pins.services.feed.model
 
 import com.squareup.moshi.JsonClass
 

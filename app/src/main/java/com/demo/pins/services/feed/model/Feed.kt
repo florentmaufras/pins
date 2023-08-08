@@ -1,4 +1,4 @@
-package com.demo.pins.feed.model
+package com.demo.pins.services.feed.model
 
 import com.demo.pins.utils.parser.BooleanFromInt
 import com.google.type.DateTime
