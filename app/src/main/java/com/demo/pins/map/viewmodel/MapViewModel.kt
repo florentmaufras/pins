@@ -12,28 +12,23 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
 class MapViewModel : ViewModel(), Store<MapState, MapAction, MapReducer> {
-    private var latestLocations: List<Location>? = null
-        set(value) {
-            field = value
-            dispatch(MapAction.Loaded(value))
-        }
 
     override val reducer: MapReducer = MapReducer()
 
     override val state: MutableStateFlow<MapState> =
-        MutableStateFlow(MapState.Loading(latestLocations))
+        MutableStateFlow(MapState.Loading(null))
 
     init {
         viewModelScope.launch(Dispatchers.IO) {
             val feeds = loadFeeds()
             val locations = extractLocationFromFeed(feeds)
-            locations?.let { latestLocations = it }
+            locations?.let { dispatch(MapAction.Loaded(it)) }
         }
     }
 
     private suspend fun loadFeeds(): List<Feed>? {
         return try {
-            dispatch(MapAction.Refresh(latestLocations))
+            dispatch(MapAction.Refresh)
             val feedsResponse = ServiceProvider.feed.getFeeds()
             feedsResponse.body()?.feeds
         } catch (e: Exception) {
@@ -41,14 +36,14 @@ class MapViewModel : ViewModel(), Store<MapState, MapAction, MapReducer> {
                 this.javaClass.name,
                 "Oups! Something went wrong!"
             )
-            dispatch(MapAction.Error(latestLocations, e))
+            dispatch(MapAction.Error(e))
             null
         }
     }
 
     private fun extractLocationFromFeed(feeds: List<Feed>?): List<Location>? {
         if (feeds.isNullOrEmpty()) {
-            dispatch(MapAction.Error(latestLocations, Exception("Feed is empty")))
+            dispatch(MapAction.Error(Exception("Feed is empty")))
             return null
         }
 

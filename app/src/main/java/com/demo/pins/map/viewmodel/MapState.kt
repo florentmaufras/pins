@@ -7,5 +7,4 @@ sealed class MapState(val locations: List<Location>?): State {
     class Loading(locations: List<Location>?): MapState(locations)
     class Error(locations: List<Location>?, val throwable: Throwable): MapState(locations)
     class Loaded(locations: List<Location>?): MapState(locations)
-    class RefreshError(locations: List<Location>, val throwable: Throwable): MapState(locations)
 }

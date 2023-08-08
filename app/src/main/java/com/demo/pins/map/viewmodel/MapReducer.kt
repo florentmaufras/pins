@@ -6,8 +6,8 @@ class MapReducer: Reducer<MapState, MapAction> {
     override fun reduce(state: MapState, action: MapAction): MapState {
         return when (action) {
             is MapAction.Refresh -> {
-                return if (action.locations.isNullOrEmpty()) {
-                    MapState.Loading(action.locations)
+                return if (state.locations.isNullOrEmpty()) {
+                    MapState.Loading(state.locations)
                 } else {
                     state
                 }
@@ -16,11 +16,7 @@ class MapReducer: Reducer<MapState, MapAction> {
                 MapState.Loaded(action.locations)
             }
             is MapAction.Error -> {
-                if (action.locations.isNullOrEmpty()) {
-                    MapState.Error(action.locations, action.throwable)
-                } else {
-                    MapState.RefreshError(action.locations, action.throwable)
-                }
+                MapState.Error(state.locations, action.throwable)
             }
         }
     }

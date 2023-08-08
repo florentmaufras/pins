@@ -69,13 +69,17 @@ class MapActivity : AppCompatActivity() {
         val currentMapState = viewModel.state.collectAsStateWithLifecycle()
 
         MaterialTheme {
-            if (currentMapState.value is MapState.RefreshError) {
+            if (currentMapState.value is MapState.Error) {
                 Toast.makeText(
                     LocalContext.current,
                     "Something went wrong!",
                     Toast.LENGTH_LONG
                 ).show()
-                Log.d("ERROR", (currentMapState.value as MapState.RefreshError).throwable.message ?: "")
+
+                Log.e(
+                    this@MapActivity::class.simpleName,
+                    (currentMapState.value as MapState.Error).throwable.message ?: ""
+                )
             }
             DisplayBottomSheetScaffold(currentMapState)
         }
