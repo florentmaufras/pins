@@ -7,4 +7,5 @@ sealed interface MapAction: Action {
     data object Refresh: MapAction
     class Loaded(val locations: List<Location>?): MapAction
     class Error(val throwable: Throwable): MapAction
+    class PinClicked(val location: Location): MapAction
 }

@@ -40,6 +40,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.demo.pins.R
 import com.demo.pins.map.data.Location
+import com.demo.pins.map.viewmodel.MapAction
 import com.demo.pins.map.viewmodel.MapState
 import com.demo.pins.map.viewmodel.MapViewModel
 import com.demo.pins.utils.extension.format
@@ -69,7 +70,7 @@ class MapActivity : AppCompatActivity() {
         val currentMapState = viewModel.state.collectAsStateWithLifecycle()
 
         MaterialTheme {
-            if (currentMapState.value is MapState.Error) {
+            (currentMapState.value as? MapState.Error)?.let { mapState ->
                 Toast.makeText(
                     LocalContext.current,
                     "Something went wrong!",
@@ -78,7 +79,7 @@ class MapActivity : AppCompatActivity() {
 
                 Log.e(
                     this@MapActivity::class.simpleName,
-                    (currentMapState.value as MapState.Error).throwable.message ?: ""
+                    mapState.throwable.message ?: ""
                 )
             }
             DisplayBottomSheetScaffold(currentMapState)
@@ -155,10 +156,10 @@ class MapActivity : AppCompatActivity() {
                 }
             }
         ) {
-            DisplayMap(currentMapState) { location ->
-                currentLocation.value = location
+            DisplayMap(currentMapState)
+            (currentMapState.value as? MapState.DisplayBottomSheet)?.let { mapState ->
+                currentLocation.value = mapState.location
                 scope.launch { modalSheetState.bottomSheetState.expand() }
-                true
             }
         }
     }
@@ -166,7 +167,7 @@ class MapActivity : AppCompatActivity() {
     @Composable
     fun DisplayMap(
         currentMapState: State<MapState>,
-        onMarkerSelected: (Location) -> Boolean
+        viewModel: MapViewModel = viewModel()
     ) {
         val montreal = LatLng(45.508888, -73.561668)
         val cameraPositionState = rememberCameraPositionState("position") {
@@ -190,7 +191,8 @@ class MapActivity : AppCompatActivity() {
                     },
                     title = location.name,
                     onClick = {
-                        onMarkerSelected(location)
+                        viewModel.dispatch(MapAction.PinClicked(location))
+                        true
                     }
                 )
             }

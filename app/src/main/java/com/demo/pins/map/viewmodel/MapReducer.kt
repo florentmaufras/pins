@@ -18,6 +18,9 @@ class MapReducer: Reducer<MapState, MapAction> {
             is MapAction.Error -> {
                 MapState.Error(state.locations, action.throwable)
             }
+            is MapAction.PinClicked -> {
+                MapState.DisplayBottomSheet(state.locations, action.location)
+            }
         }
     }
 }
