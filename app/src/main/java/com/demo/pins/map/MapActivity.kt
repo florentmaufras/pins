@@ -18,7 +18,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Grade
 import androidx.compose.material3.BottomSheetScaffold
-import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -28,6 +27,7 @@ import androidx.compose.material3.rememberBottomSheetScaffoldState
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
+import androidx.compose.runtime.State
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -39,6 +39,9 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.demo.pins.R
+import com.demo.pins.map.data.Location
+import com.demo.pins.map.viewmodel.MapState
+import com.demo.pins.map.viewmodel.MapViewModel
 import com.demo.pins.utils.extension.format
 import com.demo.pins.utils.extension.setColorFilterATop
 import com.google.android.gms.maps.model.BitmapDescriptorFactory
@@ -63,24 +66,25 @@ class MapActivity : AppCompatActivity() {
     fun Screen(
         viewModel: MapViewModel = viewModel()
     ) {
-        val error = viewModel.error.collectAsStateWithLifecycle(null)
+        val currentMapState = viewModel.state.collectAsStateWithLifecycle()
 
         MaterialTheme {
-            if (error.value != null) {
+            if (currentMapState.value is MapState.RefreshError) {
                 Toast.makeText(
                     LocalContext.current,
                     "Something went wrong!",
                     Toast.LENGTH_LONG
                 ).show()
-                Log.d("ERROR", error.value?.message ?: "")
+                Log.d("ERROR", (currentMapState.value as MapState.RefreshError).throwable.message ?: "")
             }
-            DisplayBottomSheetScaffold()
+            DisplayBottomSheetScaffold(currentMapState)
         }
     }
 
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun DisplayBottomSheetScaffold(
+        currentMapState: State<MapState>,
         viewModel: MapViewModel = viewModel()
     ) {
 
@@ -89,7 +93,7 @@ class MapActivity : AppCompatActivity() {
                 false
             ) { it != SheetValue.PartiallyExpanded }
         )
-        val currentMarker: MutableState<Marker?> = remember { mutableStateOf(null) }
+        val currentLocation: MutableState<Location?> = remember { mutableStateOf(null) }
         val scope = rememberCoroutineScope()
 
         BottomSheetScaffold(
@@ -105,12 +109,12 @@ class MapActivity : AppCompatActivity() {
                 ) {
                     Text(
                         style = MaterialTheme.typography.titleMedium,
-                        text = currentMarker.value?.name ?: ""
+                        text = currentLocation.value?.name ?: ""
                     )
                     Text(
                         modifier = Modifier.padding(bottom = 16.dp),
                         style = MaterialTheme.typography.bodyMedium,
-                        text = currentMarker.value?.let { viewModel.displayLocalization(it) } ?: ""
+                        text = currentLocation.value?.let { viewModel.displayCityRegionCountry(it) } ?: ""
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth()
@@ -118,13 +122,13 @@ class MapActivity : AppCompatActivity() {
                         Text(
                             modifier = Modifier.weight(1.0F, true),
                             style = MaterialTheme.typography.bodySmall,
-                            text = currentMarker.value?.lastUpdate?.format() ?: ""
+                            text = currentLocation.value?.lastUpdate?.format() ?: ""
                         )
                         Row(
                             modifier = Modifier.weight(1.0F, true),
                             horizontalArrangement = Arrangement.End
                         ) {
-                            val currentStarCount = currentMarker.value?.starCount ?: 0
+                            val currentStarCount = currentLocation.value?.starCount ?: 0
                             for (i in 1..5) {
                                 if (currentStarCount >= i) {
                                     Icon(
@@ -142,51 +146,47 @@ class MapActivity : AppCompatActivity() {
                     }
                     Text(
                         style = MaterialTheme.typography.bodySmall,
-                        text = currentMarker.value?.let { viewModel.displayPosition(it) } ?: ""
+                        text = currentLocation.value?.let { viewModel.displayPosition(it) } ?: ""
                     )
                 }
             }
         ) {
-            DisplayMap(
-                { marker ->
-                    currentMarker.value = marker
-                    scope.launch { modalSheetState.bottomSheetState.expand() }
-                    true
-                }
-            )
+            DisplayMap(currentMapState) { location ->
+                currentLocation.value = location
+                scope.launch { modalSheetState.bottomSheetState.expand() }
+                true
+            }
         }
     }
 
-    @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     fun DisplayMap(
-        onMarkerSelected: (Marker) -> Boolean,
-        viewModel: MapViewModel = viewModel()
+        currentMapState: State<MapState>,
+        onMarkerSelected: (Location) -> Boolean
     ) {
         val montreal = LatLng(45.508888, -73.561668)
         val cameraPositionState = rememberCameraPositionState("position") {
             position = CameraPosition.fromLatLngZoom(montreal, 1f)
         }
 
-        val markers = viewModel.markers.collectAsStateWithLifecycle()
         val pinDrawable = AppCompatResources.getDrawable(LocalContext.current, R.drawable.pin)
 
         GoogleMap(
             modifier = Modifier.fillMaxSize(),
             cameraPositionState = cameraPositionState
         ) {
-            markers.value?.map { marker ->
-                pinDrawable?.setColorFilterATop(LocalContext.current.getColor(marker.color))
+            currentMapState.value.locations?.map { location: Location ->
+                pinDrawable?.setColorFilterATop(LocalContext.current.getColor(location.color))
                 Marker(
-                    state = MarkerState(position = marker.position),
-                    icon =  pinDrawable?.toBitmap()?.let { bitmap ->
+                    state = MarkerState(position = location.position),
+                    icon = pinDrawable?.toBitmap()?.let { bitmap ->
                         BitmapDescriptorFactory.fromBitmap(
                             bitmap
                         )
                     },
-                    title = marker.name,
+                    title = location.name,
                     onClick = {
-                        onMarkerSelected(marker)
+                        onMarkerSelected(location)
                     }
                 )
             }
