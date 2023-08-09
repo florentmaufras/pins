@@ -1,4 +1,4 @@
-package com.demo.pins.map.viewmodel
+package com.demo.pins.map.redux
 
 import com.demo.pins.redux.Reducer
 

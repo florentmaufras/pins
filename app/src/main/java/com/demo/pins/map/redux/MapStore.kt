@@ -1,4 +1,4 @@
-package com.demo.pins.map.viewmodel
+package com.demo.pins.map.redux
 
 import android.util.Log
 import androidx.lifecycle.ViewModel
@@ -11,7 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
 
-class MapViewModel : ViewModel(), Store<MapState, MapAction, MapReducer> {
+class MapStore : ViewModel(), Store<MapState, MapAction, MapReducer> {
 
     override val reducer: MapReducer = MapReducer()
 

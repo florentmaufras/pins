@@ -12,7 +12,7 @@ import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.vectorResource
 import androidx.compose.ui.tooling.preview.Preview
 import com.demo.pins.R
-import com.demo.pins.ui.common.Padding
+import com.demo.pins.ui.common.Spacing
 
 
 @Composable
@@ -33,7 +33,7 @@ fun RowIconWithText(
         Text(
             style = MaterialTheme.typography.bodySmall,
             text = text,
-            modifier = Modifier.padding(start = Padding.DEFAULT.value)
+            modifier = Modifier.padding(start = Spacing.DEFAULT.value)
         )
     }
 }

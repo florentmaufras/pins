@@ -38,12 +38,12 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.demo.pins.R
 import com.demo.pins.map.data.Location
-import com.demo.pins.map.viewmodel.MapAction
-import com.demo.pins.map.viewmodel.MapState
-import com.demo.pins.map.viewmodel.MapViewModel
+import com.demo.pins.map.redux.MapAction
+import com.demo.pins.map.redux.MapState
+import com.demo.pins.map.redux.MapStore
 import com.demo.pins.ui.RowIconWithText
 import com.demo.pins.ui.RowRating
-import com.demo.pins.ui.common.Padding
+import com.demo.pins.ui.common.Spacing
 import com.demo.pins.ui.map.GoogleMap
 import com.demo.pins.utils.extension.format
 import com.google.android.gms.maps.model.CameraPosition
@@ -64,9 +64,9 @@ class MapActivity : AppCompatActivity() {
 
     @Composable
     fun Screen(
-        viewModel: MapViewModel = viewModel()
+        mapStore: MapStore = viewModel()
     ) {
-        val currentMapState = viewModel.state.collectAsStateWithLifecycle()
+        val currentMapState = mapStore.state.collectAsStateWithLifecycle()
 
         MaterialTheme {
             (currentMapState.value as? MapState.Error)?.let { mapState ->
@@ -89,7 +89,7 @@ class MapActivity : AppCompatActivity() {
     @Composable
     fun DisplayBottomSheetScaffold(
         currentMapState: State<MapState>,
-        viewModel: MapViewModel = viewModel()
+        mapStore: MapStore = viewModel()
     ) {
 
         val modalSheetState = rememberBottomSheetScaffoldState(
@@ -104,23 +104,23 @@ class MapActivity : AppCompatActivity() {
 
         BottomSheetScaffold(
             scaffoldState = modalSheetState,
-            sheetShape = RoundedCornerShape(topStart = Padding.EXTRA_LARGE.value, topEnd = Padding.EXTRA_LARGE.value),
+            sheetShape = RoundedCornerShape(topStart = Spacing.EXTRA_LARGE.value, topEnd = Spacing.EXTRA_LARGE.value),
             sheetContent = {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight(align = Alignment.Top)
-                        .padding(Padding.EXTRA_LARGE.value),
-                    verticalArrangement = Arrangement.spacedBy(Padding.SMALL.value)
+                        .padding(Spacing.EXTRA_LARGE.value),
+                    verticalArrangement = Arrangement.spacedBy(Spacing.SMALL.value)
                 ) {
                     Text(
                         style = MaterialTheme.typography.titleMedium,
                         text = currentLocation.value?.name ?: ""
                     )
                     Text(
-                        modifier = Modifier.padding(bottom = Padding.EXTRA_LARGE.value),
+                        modifier = Modifier.padding(bottom = Spacing.EXTRA_LARGE.value),
                         style = MaterialTheme.typography.bodyMedium,
-                        text = currentLocation.value?.let { viewModel.displayCityRegionCountry(it) } ?: ""
+                        text = currentLocation.value?.let { mapStore.displayCityRegionCountry(it) } ?: ""
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth()
@@ -140,7 +140,7 @@ class MapActivity : AppCompatActivity() {
                     RowIconWithText(
                         imageVector = ImageVector.vectorResource(R.drawable.pin),
                         iconContentDescription = "Latitude and longitude",
-                        text = currentLocation.value?.let { viewModel.displayPosition(it) } ?: ""
+                        text = currentLocation.value?.let { mapStore.displayPosition(it) } ?: ""
                     )
                 }
             }
@@ -152,7 +152,7 @@ class MapActivity : AppCompatActivity() {
                     var handled = false
                     currentMapState.value.locations?.let { locations ->
                         if (index < locations.size) {
-                            viewModel.dispatch(MapAction.PinClicked(locations[index]))
+                            mapStore.dispatch(MapAction.PinClicked(locations[index]))
                             handled = true
                         }
                     }
