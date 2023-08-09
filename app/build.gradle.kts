@@ -82,7 +82,6 @@ dependencies {
     //region: Google/Android dependencies
     implementation(platform("com.google.firebase:firebase-bom:32.2.2"))
     implementation("com.google.firebase:firebase-perf-ktx")
-    implementation("com.google.firebase:firebase-analytics-ktx")
 
     implementation("com.google.maps.android:maps-compose:2.12.0")
     implementation("com.google.android.gms:play-services-maps:18.1.0")
