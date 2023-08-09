@@ -26,4 +26,3 @@ I would improve the UI/UX in many ways:
 - add a pin clustering approach on the map
 
 Also I would love to look into a better implementation possibly of the redux approach in Kotlin with Compose.
-For example, I feel like getting rid of the ViewModel to name it Store would make more sense.
