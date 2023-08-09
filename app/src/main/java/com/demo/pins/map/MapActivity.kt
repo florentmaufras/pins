@@ -1,11 +1,10 @@
 package com.demo.pins.map
 
-import android.util.Log
 import android.os.Bundle
+import android.util.Log
 import android.widget.Toast
 import androidx.activity.compose.setContent
 import androidx.appcompat.app.AppCompatActivity
-import androidx.appcompat.content.res.AppCompatResources
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,11 +14,10 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentHeight
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Star
-import androidx.compose.material.icons.outlined.Grade
+import androidx.compose.material.icons.filled.Event
 import androidx.compose.material3.BottomSheetScaffold
+import androidx.compose.material3.BottomSheetScaffoldState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
@@ -33,9 +31,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
-import androidx.core.graphics.drawable.toBitmap
+import androidx.compose.ui.res.vectorResource
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.demo.pins.R
@@ -43,18 +41,19 @@ import com.demo.pins.map.data.Location
 import com.demo.pins.map.viewmodel.MapAction
 import com.demo.pins.map.viewmodel.MapState
 import com.demo.pins.map.viewmodel.MapViewModel
+import com.demo.pins.ui.RowIconWithText
+import com.demo.pins.ui.RowRating
+import com.demo.pins.ui.common.Padding
+import com.demo.pins.ui.map.GoogleMap
 import com.demo.pins.utils.extension.format
-import com.demo.pins.utils.extension.setColorFilterATop
-import com.google.android.gms.maps.model.BitmapDescriptorFactory
 import com.google.android.gms.maps.model.CameraPosition
 import com.google.android.gms.maps.model.LatLng
-import com.google.maps.android.compose.GoogleMap
-import com.google.maps.android.compose.Marker
-import com.google.maps.android.compose.MarkerState
-import com.google.maps.android.compose.rememberCameraPositionState
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 class MapActivity : AppCompatActivity() {
+
+    private val montreal = LatLng(45.508888, -73.561668)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -101,100 +100,87 @@ class MapActivity : AppCompatActivity() {
         val currentLocation: MutableState<Location?> = remember { mutableStateOf(null) }
         val scope = rememberCoroutineScope()
 
+        updateBottomSheetState(modalSheetState, currentMapState.value, currentLocation, scope)
+
         BottomSheetScaffold(
             scaffoldState = modalSheetState,
-            sheetShape = RoundedCornerShape(topStart = 12.dp, topEnd = 12.dp),
+            sheetShape = RoundedCornerShape(topStart = Padding.EXTRA_LARGE.value, topEnd = Padding.EXTRA_LARGE.value),
             sheetContent = {
                 Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .wrapContentHeight(align = Alignment.Top)
-                        .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(4.dp)
+                        .padding(Padding.EXTRA_LARGE.value),
+                    verticalArrangement = Arrangement.spacedBy(Padding.SMALL.value)
                 ) {
                     Text(
                         style = MaterialTheme.typography.titleMedium,
                         text = currentLocation.value?.name ?: ""
                     )
                     Text(
-                        modifier = Modifier.padding(bottom = 16.dp),
+                        modifier = Modifier.padding(bottom = Padding.EXTRA_LARGE.value),
                         style = MaterialTheme.typography.bodyMedium,
                         text = currentLocation.value?.let { viewModel.displayCityRegionCountry(it) } ?: ""
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth()
                     ) {
-                        Text(
-                            modifier = Modifier.weight(1.0F, true),
-                            style = MaterialTheme.typography.bodySmall,
-                            text = currentLocation.value?.lastUpdate?.format() ?: ""
+                        RowIconWithText(
+                            imageVector = Icons.Default.Event,
+                            iconContentDescription = "Last update date",
+                            text = currentLocation.value?.lastUpdate?.format() ?: "",
+                            modifier = Modifier.weight(1.0F, true)
                         )
-                        Row(
-                            modifier = Modifier.weight(1.0F, true),
-                            horizontalArrangement = Arrangement.End
-                        ) {
-                            val currentStarCount = currentLocation.value?.starCount ?: 0
-                            for (i in 1..5) {
-                                if (currentStarCount >= i) {
-                                    Icon(
-                                        imageVector = Icons.Filled.Star,
-                                        contentDescription = "Star"
-                                    )
-                                } else {
-                                    Icon(
-                                        imageVector = Icons.Outlined.Grade,
-                                        contentDescription = ""
-                                    )
-                                }
-                            }
-                        }
+                        RowRating(
+                            rating = currentLocation.value?.starCount ?: 0,
+                            horizontalArrangement = Arrangement.End,
+                            modifier = Modifier.weight(1.0F, true)
+                        )
                     }
-                    Text(
-                        style = MaterialTheme.typography.bodySmall,
+                    RowIconWithText(
+                        imageVector = ImageVector.vectorResource(R.drawable.pin),
+                        iconContentDescription = "Latitude and longitude",
                         text = currentLocation.value?.let { viewModel.displayPosition(it) } ?: ""
                     )
                 }
             }
         ) {
-            DisplayMap(currentMapState)
-            (currentMapState.value as? MapState.DisplayBottomSheet)?.let { mapState ->
-                currentLocation.value = mapState.location
-                scope.launch { modalSheetState.bottomSheetState.expand() }
-            }
+            GoogleMap(
+                initialCameraPosition = CameraPosition.fromLatLngZoom(montreal, 1.0F),
+                pins = currentMapState.value.locations,
+                onPinClicked = { _, _, index ->
+                    var handled = false
+                    currentMapState.value.locations?.let { locations ->
+                        if (index < locations.size) {
+                            viewModel.dispatch(MapAction.PinClicked(locations[index]))
+                            handled = true
+                        }
+                    }
+                    handled
+                },
+                modifier = Modifier.fillMaxSize()
+            )
         }
     }
 
-    @Composable
-    fun DisplayMap(
-        currentMapState: State<MapState>,
-        viewModel: MapViewModel = viewModel()
-    ) {
-        val montreal = LatLng(45.508888, -73.561668)
-        val cameraPositionState = rememberCameraPositionState("position") {
-            position = CameraPosition.fromLatLngZoom(montreal, 1f)
-        }
-
-        val pinDrawable = AppCompatResources.getDrawable(LocalContext.current, R.drawable.pin)
-
-        GoogleMap(
-            modifier = Modifier.fillMaxSize(),
-            cameraPositionState = cameraPositionState
-        ) {
-            currentMapState.value.locations?.map { location: Location ->
-                pinDrawable?.setColorFilterATop(LocalContext.current.getColor(location.color))
-                Marker(
-                    state = MarkerState(position = location.position),
-                    icon = pinDrawable?.toBitmap()?.let { bitmap ->
-                        BitmapDescriptorFactory.fromBitmap(
-                            bitmap
-                        )
-                    },
-                    title = location.name,
-                    onClick = {
-                        viewModel.dispatch(MapAction.PinClicked(location))
-                        true
-                    }
-                )
+    @OptIn(ExperimentalMaterial3Api::class)
+    private fun updateBottomSheetState(modalSheetState: BottomSheetScaffoldState, mapState: MapState, currentLocation: MutableState<Location?>, scope: CoroutineScope) {
+        when(mapState) {
+            is MapState.DisplayBottomSheet -> {
+                currentLocation.value = mapState.location
+                scope.launch { modalSheetState.bottomSheetState.expand() }
+            }
+            is MapState.Loaded-> {
+                currentLocation.value = null
+                scope.launch { modalSheetState.bottomSheetState.hide() }
+            }
+            is MapState.Error -> {
+                if (modalSheetState.bottomSheetState.isVisible) {
+                    scope.launch { modalSheetState.bottomSheetState.partialExpand() }
+                }
+            }
+            is MapState.Loading -> {
+                // Do nothing
             }
         }
     }
