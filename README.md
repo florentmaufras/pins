@@ -15,7 +15,15 @@ The most challenging parts for me were:
 ## If you used 3rd party libraries, explain for each one the reason for introducing that dependency and how you selected that particular library.
 - Moshi to parse Json payload
 - Retrofit to handle API calls
-- Firebase for GoogleMap and Performance
+- Firebase to track Performance issues
+- GoogleMap for the map
+
+I selected Moshi and Retrofit because there are two libraries coming from the same company and well known among the Android community.
+They work very well together and are still highly maintained.
+
+Firebase is almost unavoidable for Android apps nowadays. 
+It's a rich solution that gathers a lot of different services that are easy to use and to setup.
+In the current state of the project it's barely used, but could bring it to a whole new level with more time spent on it.
 
 ## Given 8 more hours, how would you improve your project?
 I would improve the UI/UX in many ways:
